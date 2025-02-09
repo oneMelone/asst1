@@ -242,14 +242,65 @@ void clampedExpSerial(float* values, int* exponents, float* output, int N) {
 
 void clampedExpVector(float* values, int* exponents, float* output, int N) {
 
-  //
-  // CS149 STUDENTS TODO: Implement your vectorized version of
-  // clampedExpSerial() here.
-  //
-  // Your solution should work for any value of
-  // N and VECTOR_WIDTH, not just when VECTOR_WIDTH divides N
-  //
-  
+  // __cs149_vec_float x;
+  __cs149_vec_int y;
+  __cs149_vec_float result;
+  __cs149_vec_int zero = _cs149_vset_int(0);
+  __cs149_vec_int one = _cs149_vset_int(1);
+  __cs149_vec_float gold = _cs149_vset_float(9.999999f);
+  __cs149_mask maskAll, yeq0mask, yneq0mask, ygt0mask, goldmask;
+
+  int i;
+  for (i=0; i<N + VECTOR_WIDTH; i+=VECTOR_WIDTH) {
+    // Load vector of values from contiguous memory addresses
+    // _cs149_vload_float(x, values+i, maskAll);
+    _cs149_vload_int(y, exponents + i, maskAll);
+
+    _cs149_veq_int(yeq0mask, y, zero, maskAll);
+    _cs149_vset_float(result, 1.f, yeq0mask);
+
+    yneq0mask = _cs149_mask_not(yeq0mask);
+    _cs149_vload_float(result, values+i, yneq0mask);
+    _cs149_vsub_int(y, y, one, maskAll);
+    while (true)
+    {
+      _cs149_vgt_int(ygt0mask, y, zero, maskAll);
+      if (_cs149_cntbits(ygt0mask) == 0) {
+        break;
+      }
+
+      // do mul and sub
+      _cs149_vmult_float(result, result, result, ygt0mask);
+      _cs149_vsub_int(y, y, one, maskAll);
+
+      // if > 9.999.. set to 9.999
+      _cs149_vgt_float(goldmask, result, gold, maskAll);
+      _cs149_vset_float(result, 9.999999f, goldmask);
+
+      // store
+      _cs149_vstore_float(output+i, result, maskAll);
+    }
+  }
+
+  // beyond n * VECTOR_WIDTH
+  for (; i<N; i+=VECTOR_WIDTH) {
+    float xi = values[i];
+    int yi = exponents[i];
+    if (yi == 0) {
+      output[i] = 1.f;
+    } else {
+      float resulti = xi;
+      int count = yi - 1;
+      while (count > 0) {
+        resulti *= xi;
+        count--;
+      }
+      if (resulti > 9.999999f) {
+        resulti = 9.999999f;
+      }
+      output[i] = resulti;
+    }
+  }
 }
 
 // returns the sum of all elements in values

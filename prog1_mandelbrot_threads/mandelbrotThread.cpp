@@ -46,12 +46,6 @@ static inline int mandel(float c_re, float c_im, int count)
 // Thread entrypoint.
 void workerThreadStart(WorkerArgs * const args) {
 
-    // TODO FOR CS149 STUDENTS: Implement the body of the worker
-    // thread here. Each thread should make a call to mandelbrotSerial()
-    // to compute a part of the output image.  For example, in a
-    // program that uses two threads, thread 0 could compute the top
-    // half of the image and thread 1 could compute the bottom half.
-
 	// split the out put to numthreads pieces; this thread do part threadId
     double startTime = CycleTimer::currentSeconds();
 
